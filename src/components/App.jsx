@@ -1,7 +1,7 @@
 import { Component } from 'react';
-import { nanoid } from 'nanoid';
 import { Box } from 'Box';
-import { ContactsList, FormNewContact } from '../components';
+import { ContactsList, ContactForm, Filter } from '../components';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 export class App extends Component {
   state = {
@@ -12,57 +12,57 @@ export class App extends Component {
       { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
     ],
     filter: '',
-    name: '',
-    number: '',
   };
 
-  handleContact = e => {
+  handleFormSubmit = newContact => {
+    for (const contact of this.state.contacts) {
+      const currentName = contact.name.toLocaleLowerCase();
+      const newName = newContact.name.toLocaleLowerCase();
+      if (currentName === newName) {
+        Notify.warning(`${newContact.name} is already in contacts.`, {
+          position: 'center-top',
+        });
+        return;
+      }
+    }
+
+    this.setState({
+      contacts: [newContact, ...this.state.contacts],
+    });
+  };
+
+  handleFilter = e => {
     this.setState({
       [e.currentTarget.name]: e.currentTarget.value,
     });
   };
 
-  handleFormSubmit = e => {
-    e.preventDefault();
-    const newContact = {
-      id: nanoid(5),
-      name: this.state.name,
-      number: this.state.number,
-    };
-
-    this.setState({
-      contacts: [newContact, ...this.state.contacts],
-    });
-    this.resetForm();
-  };
-
-  resetForm = () => {
-    this.setState({
-      name: '',
-      number: '',
-    });
+  handleDelete = idItems => {
+    this.setState(prevState => ({
+      contacts: prevState.contacts.filter(({ id }) => id !== idItems),
+    }));
   };
 
   render() {
-    const contactsTotal = this.state.contacts.length;
-    const visibleContacts = this.state.contacts.filter(contact =>
-      contact.name.toLowerCase().includes(this.state.filter.toLowerCase())
+    const { contacts } = this.state;
+    const contactsTotal = contacts.length;
+    const visibleContacts = contacts.filter(({name}) =>
+      name.toLowerCase().includes(this.state.filter.toLowerCase())
     );
 
     return (
-      <Box as="section" p="24px">
+      <Box p="24px">
         <h1>Phonebook</h1>
-        <FormNewContact
-          onSubmit={this.handleFormSubmit}
-          valueName={this.state.name}
-          valueNumber={this.state.number}
-          onChange={this.handleContact}
-        />
+        <ContactForm onSubmitForm={this.handleFormSubmit} />
         <h2>Contacts</h2>
-        {contactsTotal > 0 ? (
-          <ContactsList names={visibleContacts} onChange={this.handleContact} />
-        ) : (
-          ''
+        {contactsTotal > 0 && (
+          <>
+            <Filter onChange={this.handleFilter} />
+            <ContactsList
+              contacts={visibleContacts}
+              onClickDelete={this.handleDelete}
+            />
+          </>
         )}
       </Box>
     );
