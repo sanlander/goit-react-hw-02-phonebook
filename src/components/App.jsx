@@ -15,15 +15,17 @@ export class App extends Component {
   };
 
   handleFormSubmit = newContact => {
-    for (const contact of this.state.contacts) {
-      const currentName = contact.name.toLocaleLowerCase();
-      const newName = newContact.name.toLocaleLowerCase();
-      if (currentName === newName) {
-        Notify.warning(`${newContact.name} is already in contacts.`, {
-          position: 'center-top',
-        });
-        return;
-      }
+    const newName = newContact.name.toLocaleLowerCase();
+
+    if (
+      this.state.contacts.find(
+        ({ name }) => newName === name.toLocaleLowerCase()
+      )
+    ) {
+      Notify.warning(`${newContact.name} is already in contacts.`, {
+        position: 'center-top',
+      });
+      return;
     }
 
     this.setState({
@@ -46,7 +48,7 @@ export class App extends Component {
   render() {
     const { contacts } = this.state;
     const contactsTotal = contacts.length;
-    const visibleContacts = contacts.filter(({name}) =>
+    const visibleContacts = contacts.filter(({ name }) =>
       name.toLowerCase().includes(this.state.filter.toLowerCase())
     );
 
